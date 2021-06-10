@@ -1,0 +1,5 @@
+var DISQUSWIDGETS;
+
+if (typeof DISQUSWIDGETS != 'undefined') {
+    DISQUSWIDGETS.displayCount({"text":{"and":"and","comments":{"zero":"  ","multiple":"<i class=\"icon-comments\"><\/i> {num}","one":"<i class=\"icon-comments\"><\/i> 1"}},"counts":[{"id":"1269720 http:\/\/wccftech.com\/?p=1269720","comments":0},{"id":"1269666 http:\/\/wccftech.com\/?p=1269666","comments":0},{"id":"1269014 http:\/\/wccftech.com\/?p=1269014","comments":0},{"id":"1269280 http:\/\/wccftech.com\/?p=1269280","comments":0},{"id":"1269764 http:\/\/wccftech.com\/?p=1269764","comments":1}]});
+}

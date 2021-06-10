@@ -1,0 +1,389 @@
+(function($) {
+$(document).ready(function() {
+
+	var headroom  = new Headroom(document.querySelector("header"), {"offset": 125, tolerance: 5 });
+	headroom.init();	
+	
+	dayjs.extend(window.dayjs_plugin_relativeTime);
+	dayjs.extend(window.dayjs_plugin_customParseFormat);
+	
+	$('.relative-time').each(function() {
+		$(this).html( dayjs ($(this).data('time')).fromNow() );
+	});
+
+	$('.body iframe').wrap('<div class="iframe-wrapper" />');
+	$('.body table').wrap('<div class="table-wrapper" />');
+
+	$(document).on('change', 'div.ntv-box2', function() {
+		$( "div.ntv-box2:parent" ).addClass('wccf_related_post_sponsored');
+	});
+
+	/*$.get("https://api.wccftech.com/GXmcyWYSpG/DiMmfGdNOE", function(response) {
+		if(response) {
+			$('.subscribe').hide();
+		}
+	});*/
+
+	var wccftech_beta = Cookies.get('wccftech_beta');
+	
+	if(wccftech_beta === undefined) {
+
+		$( "#wccftech-beta-opt-out" ).hide();
+		$( "#wccftech-beta-status" ).html('Status: beta not enabled');
+
+	} else {
+
+		$( "#wccftech-beta-opt-in" ).hide();
+		$( "#wccftech-beta-status" ).html('Status: beta enabled');
+
+	}
+
+	$('#wccftech-beta-opt-in').click(function() {
+		Cookies.set('wccftech_beta', 1, { expires: 365 });
+		window.location.reload(false); 
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'Search', 'click'); }
+	});
+
+	$('#wccftech-beta-opt-out').click(function() {
+		Cookies.remove('wccftech_beta');
+		window.location.reload(false); 
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'Search', 'click'); }
+	});
+
+	$('.toggle-search').click(function() {
+		$(".search-form").fadeToggle(100, 'linear');
+		$(this).toggleClass("active");
+		$('#q').focus();
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'Search', 'click'); }
+	});
+
+	$('.feedback-link').click(function() {
+		$(".feedback-form").fadeToggle(100, 'linear');
+		$("#feedback_form_name").val('');
+		$("#feedback_form_email").val('');
+		$("#feedback_form_feedback").val('');
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'Build My PC', 'feedback-link'); }
+	});
+
+	/*$('.post-tv').click(function() {
+		video_id = $(this).data("video");
+		$(this).find('.video').addClass("open");
+		$(this).find('.video').html('<iframe class="inline-youtube" src="https://www.youtube.com/embed/'+video_id+'?enablejsapi=1&rel=0&autoplay=1&showinfo=0&modestbranding=1&iv_load_policy=3" frameborder="0" allowFullScreen="allowFullScreen" allow="autoplay"></iframe>');
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'YouTube', 'Inline', video_id); }
+	});
+
+	function isScrolledIntoView(elem) {
+		var $window = $(window),
+		docViewTop = $window.scrollTop(),
+		docViewBottom = docViewTop + $window.height(),
+		elemTop = $(elem).offset().top,
+		elemBottom = elemTop + $(elem).outerHeight();
+		//return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
+		return ((elemBottom <= docViewBottom) && (elemBottom >= docViewTop));
+	}
+	
+	$(window).on("scroll", function() {
+	
+		$('.inline-youtube').each(function() {
+			if (!isScrolledIntoView(this)) {
+				$(this)[0].contentWindow.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');				
+			}
+		});
+	
+	});*/
+		
+	/*
+	$('.search-form').submit(function(e) {
+		e.preventDefault();
+		var search_url = '/find/?q=' + document.getElementById('s').value.replace(/ /g, '+');
+		window.location = search_url;
+	});
+	*/
+
+	$('a.wccf-stock-quote').each(function() {
+
+		var link = $(this);
+		var text = $(this).text();
+		var exc_sym = text.split(":");
+
+		$(this).html(text + '<span class="fetching"></span>');
+
+		var newtext;
+		//$.getJSON('https://api.iextrading.com/1.0/stock/'+exc_sym[1]+'/quote', function(data) {
+
+		if(exc_sym[0] === 'NASDAQ' || exc_sym[0] === 'NYSE' ) {
+			$.getJSON('https://cloud.iexapis.com/stable/stock/'+exc_sym[1]+'/quote?token=pk_ea485b7593a64d5288b020720642c41b', function(data) {
+
+				if(data.symbol !== null) {
+					
+					if(data.change < 0) {
+						$(link).addClass('minus');
+						newtext = text + ' <span><i class="icon-arrow-down"></i><strong>' + data.latestPrice + '</strong> ' + (data.changePercent * 100).toFixed(2) + '%</span>';
+					}
+					
+					if(data.change > 0) {
+						$(link).addClass('plus');
+						newtext = text + ' <span><i class="icon-arrow-up"></i><strong>' + data.latestPrice + '</strong> ' + (data.changePercent * 100).toFixed(2) + '%</span>';
+					}
+		
+					if(data.change == 0) {
+						$(link).addClass('plus');
+						newtext = text + ' <span><strong>' + data.latestPrice + '</strong> ' + (data.changePercent * 100).toFixed(2) + '%</span>';
+					}
+
+					$(link).html(newtext);
+				} else {
+					
+					$(link).html(text + '<span class="quote-na">n/a</span>');
+					
+				}
+				
+			}).error(function() {
+				 
+				$(link).html(text + '<span class="quote-na">n/a</span>');
+				
+			});
+		} else {
+			$(link).html(text + '<span class="quote-na">n/a</span>');
+		}
+
+	});
+
+	$('div.wccf-stock-item').each(function() {
+
+		var div = $(this);
+		var text = $(this).text();
+		var exc_sym_full = $(this).data('symbol');
+		var exc_sym = $(this).data('symbol').split(":");
+		var newtext;
+		var change;
+
+		if(exc_sym[0] === 'NASDAQ' || exc_sym[0] === 'NYSE' ) {
+
+			$.getJSON('https://cloud.iexapis.com/stable/stock/'+exc_sym[1]+'/quote?token=pk_ea485b7593a64d5288b020720642c41b&displayPercent=true', function(data) {
+
+				if(data.symbol !== null) {
+
+					if(data.change < 0) { $(div).addClass('down'); change = 'down'; }
+					if(data.change > 0) { $(div).addClass('up'); change = 'up'; }
+					if(data.change == 0) { $(div).addClass('up'); change = 'up'; }
+
+					newtext = '<a href="https://www.google.com/finance?q='+exc_sym_full+'" target="_blank" rel="nofollow">';
+					newtext += '<div class="symbol">'+data.symbol+'</div><div class="company">'+data.companyName+'</div><div class="price">'+data.latestPrice+' <span>USD</span></div><div class="change '+change+'"><span class="changevalue">'+data.change+'</span> &nbsp; <span class="changeper">'+data.changePercent.toFixed(2)+'%</span></div>';
+					newtext += '</a>';
+
+					$(div).html(newtext);
+
+				} else {
+
+					$(div).hide();
+				}
+
+			}).error(function() {
+			 
+				$(div).hide();
+			
+			});
+
+		} else {
+			$(div).hide();
+		}
+
+	});
+
+	$('div.wccf-stock-profile').each(function() {
+
+		var div = $(this);
+		var text = $(this).text();
+		var exc_sym_full = $(this).data('symbol');
+		var exc_sym = $(this).data('symbol').split(":");
+		var newtext;
+		var change;
+
+		if(exc_sym[0] === 'NASDAQ' || exc_sym[0] === 'NYSE' ) {
+
+			$.getJSON('https://cloud.iexapis.com/stable/stock/'+exc_sym[1]+'/company?token=pk_ea485b7593a64d5288b020720642c41b', function(data) {
+
+				$('.wccf-stock-profile .wccf-stock-profile-description').html(data.description);
+				$('.wccf-stock-profile .wccf-stock-profile-sector').html(data.sector);
+				$('.wccf-stock-profile .wccf-stock-profile-industry').html(data.industry);
+				$('.wccf-stock-profile .wccf-stock-profile-employees').html(data.employees);
+				$('.wccf-stock-profile .wccf-stock-profile-address').html(data.address + ', ' + data.city + ', ' + data.state);
+				$('.wccf-stock-profile .wccf-stock-profile-phone').html(data.phone);
+				$('.wccf-stock-profile .wccf-stock-profile-website').html('<a href="'+data.website+'" rel="nofollow">'+data.website+'</a>');
+
+				$('.wccf-stock-profile .wccf-stock-profile-description').readmore({ collapsedHeight: 120, speed: 75, moreLink: '<a href="#">...read more</a>', lessLink: '' });
+
+			}).error(function() {
+			 
+				$(div).hide();
+			
+			});
+
+		} else {
+			$(div).hide();
+		}
+
+	});
+
+	$('.sidebar-youtube-player').on('click', function(e) {
+		
+		var video_id = $(this).data("video");				
+		$('.sidebar-youtube-player').css('background-image', 'none');
+		$('.sidebar-youtube-player').html('<iframe src="https://www.youtube.com/embed/'+video_id+'?&rel=0&autoplay=1&showinfo=0&modestbranding=1&iv_load_policy=3" frameborder="0" allowFullScreen="allowFullScreen" allow="autoplay"></iframe>');
+
+		var action = $(this).closest(".sidebar-youtube").data('page');
+		if (typeof ga !== 'undefined') { ga( 'send', 'event', 'YouTube', action, video_id, { nonInteraction: true } ); }
+	});	
+
+
+	$('.sidebar-youtube-video').on('click', function(e) {
+		
+		var video_id = $(this).data("video");
+		$('.sidebar-youtube-player').css('background-image', 'none');
+		$('.sidebar-youtube-player').html('<iframe src="https://www.youtube.com/embed/'+video_id+'?&rel=0&autoplay=1&showinfo=0&modestbranding=1&iv_load_policy=3" frameborder="0" allowFullScreen="allowFullScreen" allow="autoplay"></iframe>');
+
+		$('.sidebar-youtube-video').removeClass('active');
+		$(this).addClass('active');
+		
+		var action = $(this).closest(".sidebar-youtube").data('page');
+		if (typeof ga !== 'undefined') { ga( 'send', 'event', 'YouTube', action, video_id, { nonInteraction: true } ); }
+	});	
+	
+
+	$('.youtube-thumb').on('click', function(e) {
+		
+		var video_id = $(this).data("video");
+		$('.youtube-player-wrap').css('background-image', 'none');
+		$('.youtube-player-wrap').html('<iframe src="https://www.youtube.com/embed/'+video_id+'?&rel=0&autoplay=1&showinfo=0&modestbranding=1&iv_load_policy=3" frameborder="0" allowFullScreen="allowFullScreen" allow="autoplay"></iframe>');
+
+		$('.youtube-thumb').removeClass('active');
+		$(this).addClass('active');
+		
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'YouTube', 'Home', video_id); }
+	});	
+	
+	$('.youtube-player-wrap').on('click', function(e) {
+		
+		var video_id = $(this).data("video");
+		$('.youtube-player-wrap').css('background-image', 'none');
+		$('.youtube-player-wrap').html('<iframe src="https://www.youtube.com/embed/'+video_id+'?&rel=0&autoplay=1&showinfo=0&modestbranding=1&iv_load_policy=3" frameborder="0" allowFullScreen="allowFullScreen" allow="autoplay"></iframe>');
+
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'YouTube', 'Home', video_id); }
+	});	
+
+	$(".feedback-form form").submit(function(e) {
+		
+		//if (typeof ga !== 'undefined') { ga('send', 'event', 'Build My PC', 'feedback-form'); }
+		$('.feedback-result').html('<img src="https://cdn.wccftech.com/builder/loading2.gif" width="15" height="15" alt="loading">');
+		$.post("/wp-admin/admin-ajax.php", $(this).serialize(), function(response) {
+			if(response == 'success') {
+				$('.feedback-result').html('Thank you for the feedback.');
+				$('.feedback-form').hide();
+			} else {
+				$('.feedback-result').html(response);			
+			}
+		});
+		e.preventDefault();
+	});
+	
+	/*$("#form_add_to_cart").submit(function(e) {
+		if (typeof ga !== 'undefined') { ga('send', 'event', 'Build My PC', 'Add To Cart'); }
+	});*/
+
+	$(".traqli").submit(function(e) {
+		
+		var page  = $(this).data('page');
+		var email = $(this).children('#sub_email').val();
+		var traqli_form = $(this);
+		var traqli_status = $(this).siblings('.status');
+		
+		traqli_status.html('<img src="https://cdn.wccftech.com/builder/loading2.gif" width="15" height="15" alt="loading">');
+
+		if (typeof ga !== 'undefined') { ga('send', 'event', 'Newsletter', page, email); }
+
+		$.post("/wordpress/wp-admin/admin-ajax.php", $(this).serialize(), function(response) {
+			if(response == 'success') {
+				traqli_status.html('You have been successfully subscribed to our newsletter.<br><br>Thank you.');
+				traqli_form.hide();
+			} else {
+				traqli_status.html(response);			
+			}
+		});
+
+		e.preventDefault();
+	});
+
+
+
+	/* ANALYTICS EVENTS */
+
+	$('.widget-analytics a').click(function(e) {
+		if (typeof ga !== "function") return;
+		event = $(this).closest(".widget-analytics").data('event');
+		action = $(this).closest(".widget-analytics").data('page');
+		label = $(this).attr("href");
+		ga('send', 'event', event, action, label, {'transport': 'beacon'});
+	});
+
+	$('a.wccf-product').click(function(e) {
+		if (typeof ga !== "function") return;
+		var product = $(this).data("product");
+		ga('send', 'event', 'Affiliate', 'Post End', product, {'transport': 'beacon'});
+	});
+
+
+	$('.meta-share-top .facebook').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Top)', document.location.href);
+		do_share('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(document.location.href), 600, 400);
+	});
+	
+	$('.meta-share-top .twitter').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Top)', document.location.href);
+		do_share( 'https://twitter.com/intent/tweet?url=' + document.location.href + '&text=' + encodeURIComponent(truncate_text(document.title, 110)), 600, 400 );
+	});
+
+	$('.meta-share-top .reddit').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Top)', document.location.href);
+		do_share('https://www.reddit.com/submit?url=' + encodeURIComponent(document.location.href), 600, 500);
+	});
+
+	$('.meta-share-bottom .facebook').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Bottom)', document.location.href);
+		do_share('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(document.location.href), 600, 400);
+	});
+	
+	$('.meta-share-bottom .twitter').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Bottom)', document.location.href);
+		do_share( 'https://twitter.com/intent/tweet?url=' + document.location.href + '&text=' + encodeURIComponent(truncate_text(document.title, 110)), 600, 400 );
+	});
+
+	$('.meta-share-bottom .reddit').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Bottom)', document.location.href);
+		do_share('https://www.reddit.com/submit?url=' + encodeURIComponent(document.location.href), 600, 500);
+	});
+
+	$('.meta-share-bottom .linkedin').on('click', function(e) {
+		//if (typeof ga !== 'undefined') ga('send', 'event', 'Share', 'Single (Bottom)', document.location.href);
+		do_share('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(document.location.href), 600, 600);
+	});
+
+	//$(".wp-gallery").lightGallery({mode: 'lg-fade', hideBarsDelay: 2000, preload: 2, thumbWidth: 168, thumbContHeight: 100});
+	$(".wp-lightbox").lightGallery({mode: 'lg-fade'});
+	$('.lightslider').lightSlider({
+        gallery:true,
+        item:1,
+        loop:true,
+        thumbItem:6,
+        slideMargin:0,
+        enableDrag: false,
+        currentPagerPosition:'left',
+		onSliderLoad: function(el) {
+            el.lightGallery({
+                selector: '.lightslider .lslide', mode: 'lg-fade', hideBarsDelay: 1000, preload: 2, thumbWidth: 124, thumbContHeight: 80, getCaptionFromTitleOrAlt: false
+            });
+        }
+    });
+		
+});
+})(jQuery);	
